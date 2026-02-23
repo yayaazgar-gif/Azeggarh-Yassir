@@ -1,0 +1,185 @@
+import java.util.Scanner;
+import java.io.*;
+
+public class Main {
+
+    static final int MAX = 100;
+    static String[] noms = new String[MAX];
+    static double[] prix = new double[MAX];
+    static int[] quantites = new int[MAX];
+    static int nbProduits = 0;
+
+    static Scanner sc = new Scanner(System.in);
+
+    // Affichage du menu
+    public static void afficherMenu() {
+        System.out.println("\n===== MENU =====");
+        System.out.println("1. Ajouter un produit");
+        System.out.println("2. Afficher stock");
+        System.out.println("3. Rechercher produit");
+        System.out.println("4. Effectuer vente");
+        System.out.println("5. Etat alerte (<5)");
+        System.out.println("6. Sauvegarder");
+        System.out.println("7. Quitter");
+    }
+
+    // Saisie d'un entier
+    public static int saisirEntier(String message) {
+        System.out.print(message);
+        return sc.nextInt();
+    }
+
+    // Ajouter un produit
+    public static void ajouterProduit() {
+        if (nbProduits >= MAX) {
+            System.out.println("Stock plein !");
+            return;
+        }
+
+        sc.nextLine(); // consommer le retour à la ligne
+        System.out.print("Nom: ");
+        String nom = sc.nextLine();
+
+        System.out.print("Prix: ");
+        double p = sc.nextDouble();
+
+        System.out.print("Quantite: ");
+        int q = sc.nextInt();
+
+        noms[nbProduits] = nom;
+        prix[nbProduits] = p;
+        quantites[nbProduits] = q;
+
+        nbProduits++;
+        System.out.println("Produit ajoute !");
+    }
+
+    // Rechercher un produit
+    public static int rechercherProduit(String nom) {
+        for (int i = 0; i < nbProduits; i++) {
+            if (noms[i].equalsIgnoreCase(nom)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // Effectuer une vente
+    public static void effectuerVente() {
+        sc.nextLine();
+        System.out.print("Nom produit: ");
+        String nom = sc.nextLine();
+
+        int index = rechercherProduit(nom);
+
+        if (index == -1) {
+            System.out.println("Produit introuvable !");
+            return;
+        }
+
+        System.out.print("Quantite demandee: ");
+        int q = sc.nextInt();
+
+        if (quantites[index] < q) {
+            System.out.println("Stock insuffisant !");
+            return;
+        }
+
+        double total = prix[index] * q;
+        if (total > 1000) {
+            total = total * 0.9; // remise 10% si >1000
+        }
+
+        quantites[index] -= q;
+
+        System.out.println("\n===== TICKET =====");
+        System.out.println("Produit: " + nom);
+        System.out.println("Quantite: " + q);
+        System.out.println("Total a payer: " + total + " DH");
+    }
+
+    // Afficher le stock
+    public static void afficherStock() {
+        System.out.println("\nNOM | PRIX | QTE | VALEUR");
+        for (int i = 0; i < nbProduits; i++) {
+            double valeur = prix[i] * quantites[i];
+            System.out.println(noms[i] + " | " + prix[i] + " | " +
+                               quantites[i] + " | " + valeur);
+        }
+    }
+
+    // Afficher les produits en alerte (<5)
+    public static void etatAlerte() {
+        System.out.println("\n=== PRODUITS EN ALERTE ===");
+        for (int i = 0; i < nbProduits; i++) {
+            if (quantites[i] < 5) {
+                System.out.println(noms[i] + " (QTE=" + quantites[i] + ")");
+            }
+        }
+    }
+
+    // Sauvegarder le stock dans un fichier
+    public static void sauvegarderStock() {
+        try {
+            PrintWriter pw = new PrintWriter(new FileWriter("stock.txt"));
+            for (int i = 0; i < nbProduits; i++) {
+                pw.println(noms[i] + ";" + prix[i] + ";" + quantites[i]);
+            }
+            pw.close();
+            System.out.println("Sauvegarde terminee !");
+        } catch (Exception e) {
+            System.out.println("Erreur sauvegarde");
+        }
+    }
+
+    // Charger le stock depuis un fichier
+    public static void chargerStock() {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("stock.txt"));
+            String ligne;
+            while ((ligne = br.readLine()) != null) {
+                String[] parts = ligne.split(";");
+                noms[nbProduits] = parts[0];
+                prix[nbProduits] = Double.parseDouble(parts[1]);
+                quantites[nbProduits] = Integer.parseInt(parts[2]);
+                nbProduits++;
+            }
+            br.close();
+        } catch (Exception e) {
+            System.out.println("Aucun fichier stock trouve.");
+        }
+    }
+
+    // Programme principal
+    public static void main(String[] args) {
+        chargerStock();
+
+        int choix;
+        do {
+            afficherMenu();
+            choix = saisirEntier("Choix: ");
+
+            switch (choix) {
+                case 1: ajouterProduit(); break;
+                case 2: afficherStock(); break;
+                case 3:
+                    sc.nextLine();
+                    System.out.print("Nom a rechercher: ");
+                    String nom = sc.nextLine();
+                    int i = rechercherProduit(nom);
+                    if (i != -1)
+                        System.out.println("Trouve: " + noms[i] +
+                                           " Prix=" + prix[i] +
+                                           " QTE=" + quantites[i]);
+                    else
+                        System.out.println("Non trouve !");
+                    break;
+                case 4: effectuerVente(); break;
+                case 5: etatAlerte(); break;
+                case 6: sauvegarderStock(); break;
+                case 7: sauvegarderStock(); System.out.println("Au revoir"); break;
+                default: System.out.println("Choix invalide");
+            }
+        } while (choix != 7);
+    }
+}
